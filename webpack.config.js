@@ -24,6 +24,8 @@ module.exports = {
             directory: path.join(__dirname, "dist")
         },
 
+        historyApiFallback: true,
+
         hot: true,
     },
     plugins: [
