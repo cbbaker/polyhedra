@@ -1,4 +1,5 @@
 import { MainDOMSource } from '@cycle/dom';
+import { ResponseCollection } from '@cycle/storage';
 import createControls, { Schema } from './createControls';
 
 const schema: Schema = [
@@ -15,6 +16,6 @@ const schema: Schema = [
     },
 ];
 
-export default function dodecahedronControls(DOM: MainDOMSource) {
-    return createControls('icosahedron', 'Interpolate', schema, DOM);
+export default function dodecahedronControls(DOM: MainDOMSource, storage: ResponseCollection) {
+    return createControls('icosahedron', 'Interpolate', schema, DOM, storage);
 }

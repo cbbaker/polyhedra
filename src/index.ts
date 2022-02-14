@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { run } from '@cycle/run';
+import storageDriver, { ResponseCollection, StorageRequest } from '@cycle/storage';
 import { Stream } from 'xstream';
 import { div, span, ul, li, form, canvas, nav, a, button, makeDOMDriver, MainDOMSource, VNode } from '@cycle/dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -44,7 +45,7 @@ function getState(url: string): string {
     return found[1];
 }
 
-function controls({ DOM, three }: { DOM: MainDOMSource, three: Observable<Config> }) {
+function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Observable<Config>, storage: ResponseCollection }) {
     const state$ = DOM.select('.nav-link')
         .events('click')
         .map((event: Event) => {
@@ -61,18 +62,24 @@ function controls({ DOM, three }: { DOM: MainDOMSource, three: Observable<Config
         .map(([cmdType]: [string, Config]) => {
             switch (cmdType) {
                 case 'icosahedron':
-                    return icosahedronControls(DOM);
+                    return icosahedronControls(DOM, storage);
                 case 'dodecahedron':
-                    return dodecahedronControls(DOM);
+                    return dodecahedronControls(DOM, storage);
             }
         })
         .startWith({
             vdom: Stream.of(div()),
-            command: { cmdType: 'initialize', props: { canvasId: 'canvas' } }
+            command: { cmdType: 'initialize', props: { canvasId: 'canvas' } },
+            storage: Stream.from([]),
         })
 
-    const command$ = control$.map(({ command }: { command: Command }) => command)
+    const command$ = control$
+        .map(({ command }: { command: Command }) => command)
         .startWith({ cmdType: 'initialize', props: { canvasId: 'canvas' } });
+
+    const storage$ = control$
+        .map(({ storage }: { storage: Stream<StorageRequest> }) => storage)
+        .flatten();
 
     const vdom$ = Stream.combine(control$, config$)
         .map(([{ vdom: controls$ }, config]: [{ vdom: Stream<VNode> }, Config]) => {
@@ -116,14 +123,15 @@ function controls({ DOM, three }: { DOM: MainDOMSource, three: Observable<Config
             }
         }));
 
-    return { vdom: vdom$, command: command$ };
+    return { vdom: vdom$, command: command$, storage: storage$ };
 }
 
-function main(sources: { DOM: MainDOMSource, three: Observable<Config> }) {
-    const { vdom: vdom$, command: command$ } = controls(sources)
+function main(sources: { DOM: MainDOMSource, three: Observable<Config>, storage: ResponseCollection }) {
+    const { vdom: vdom$, command: command$, storage: storage$ } = controls(sources)
     const sinks = {
         DOM: vdom$,
         three: command$,
+        storage: storage$,
     };
     return sinks;
 }
@@ -131,6 +139,7 @@ function main(sources: { DOM: MainDOMSource, three: Observable<Config> }) {
 const drivers = {
     DOM: makeDOMDriver('#app'),
     three: makeThreeDriver(),
+    storage: storageDriver,
 };
 
 run(main, drivers);
