@@ -1,5 +1,5 @@
-import { Stream } from 'xstream';
-import { Observable, Subscriber, Subscription } from 'rxjs';
+import { Stream, Subscription } from 'xstream';
+import { Observable, Subscriber } from 'rxjs';
 import * as three from 'three';
 import makeObservable from './makeObservable';
 
@@ -81,13 +81,13 @@ const cubeOperations = computeCubeOperations(operations);
 export class Dodecahedron {
     mesh: three.Object3D;
     geometry: three.Geometry;
-    controls: Observable<ControlState>;
+    controls: Stream<ControlState>;
     subscription: Subscription;
     materials: Map<string, three.Material>;
     colors: string[];
     scene: three.Scene;
 
-    constructor(controls: Observable<ControlState>) {
+    constructor(controls: Stream<ControlState>) {
         this.controls = controls;
         this.createMaterials();
         this.computeMesh();
@@ -199,59 +199,61 @@ export class Dodecahedron {
             return material
         }));
 
-        this.subscription = this.controls.subscribe(({ opacity, showSkeleton, showShell, cubeCount, evenTetrahedraCount, oddTetrahedraCount }) => {
-            this.geometry.faces = [];
+        this.subscription = this.controls.subscribe({
+            next: ({ opacity, showSkeleton, showShell, cubeCount, evenTetrahedraCount, oddTetrahedraCount }) => {
+                this.geometry.faces = [];
 
-            this.updateMaterials(opacity);
-            if (showSkeleton) {
-                //cube
-                this.addCubeFaces([0, 1, 2, 3, 4, 5, 6, 7], this.getMaterial('red'));
+                this.updateMaterials(opacity);
+                if (showSkeleton) {
+                    //cube
+                    this.addCubeFaces([0, 1, 2, 3, 4, 5, 6, 7], this.getMaterial('red'));
 
-                // rectangles
-                this.addFaces([8, 9, 11, 10], this.getMaterial('blue'));
-                this.addFaces([8, 10, 11, 9], this.getMaterial('blue'));
+                    // rectangles
+                    this.addFaces([8, 9, 11, 10], this.getMaterial('blue'));
+                    this.addFaces([8, 10, 11, 9], this.getMaterial('blue'));
 
-                this.addFaces([12, 13, 15, 14], this.getMaterial('green'));
-                this.addFaces([12, 14, 15, 13], this.getMaterial('green'));
+                    this.addFaces([12, 13, 15, 14], this.getMaterial('green'));
+                    this.addFaces([12, 14, 15, 13], this.getMaterial('green'));
 
-                this.addFaces([16, 17, 19, 18], this.getMaterial('yellow'));
-                this.addFaces([16, 18, 19, 17], this.getMaterial('yellow'));
+                    this.addFaces([16, 17, 19, 18], this.getMaterial('yellow'));
+                    this.addFaces([16, 18, 19, 17], this.getMaterial('yellow'));
+                }
+
+                for (let i = 0; i < cubeCount; ++i) {
+                    this.addCubeFaces(cubeOperations[i], i + 1);
+                }
+
+                for (let i = 0; i < evenTetrahedraCount; ++i) {
+                    this.addEvenTetrahedraFaces(cubeOperations[i], i + 1);
+                }
+
+                for (let i = 0; i < oddTetrahedraCount; ++i) {
+                    this.addOddTetrahedraFaces(cubeOperations[i], i + 1);
+                }
+
+                if (showShell) {
+                    // dodecahedron
+                    this.addFaces([0, 12, 2, 17, 16], this.getMaterial('white'));
+                    this.addFaces([0, 8, 4, 14, 12], this.getMaterial('white'));
+                    this.addFaces([4, 18, 19, 6, 14], this.getMaterial('white'));
+                    this.addFaces([2, 12, 14, 6, 10], this.getMaterial('white'));
+
+                    this.addFaces([2, 10, 11, 3, 17], this.getMaterial('white'));
+                    this.addFaces([0, 16, 1, 9, 8], this.getMaterial('white'));
+                    this.addFaces([4, 8, 9, 5, 18], this.getMaterial('white'));
+                    this.addFaces([6, 19, 7, 11, 10], this.getMaterial('white'));
+
+                    this.addFaces([1, 16, 17, 3, 13], this.getMaterial('white'));
+                    this.addFaces([1, 13, 15, 5, 9], this.getMaterial('white'));
+                    this.addFaces([5, 15, 7, 19, 18], this.getMaterial('white'));
+                    this.addFaces([3, 11, 7, 15, 13], this.getMaterial('white'));
+                }
+
+                this.geometry.computeBoundingSphere();
+                this.geometry.computeFaceNormals();
+                this.geometry.elementsNeedUpdate = true;
+
             }
-
-            for (let i = 0; i < cubeCount; ++i) {
-                this.addCubeFaces(cubeOperations[i], i + 1);
-            }
-
-            for (let i = 0; i < evenTetrahedraCount; ++i) {
-                this.addEvenTetrahedraFaces(cubeOperations[i], i + 1);
-            }
-
-            for (let i = 0; i < oddTetrahedraCount; ++i) {
-                this.addOddTetrahedraFaces(cubeOperations[i], i + 1);
-            }
-
-            if (showShell) {
-                // dodecahedron
-                this.addFaces([0, 12, 2, 17, 16], this.getMaterial('white'));
-                this.addFaces([0, 8, 4, 14, 12], this.getMaterial('white'));
-                this.addFaces([4, 18, 19, 6, 14], this.getMaterial('white'));
-                this.addFaces([2, 12, 14, 6, 10], this.getMaterial('white'));
-
-                this.addFaces([2, 10, 11, 3, 17], this.getMaterial('white'));
-                this.addFaces([0, 16, 1, 9, 8], this.getMaterial('white'));
-                this.addFaces([4, 8, 9, 5, 18], this.getMaterial('white'));
-                this.addFaces([6, 19, 7, 11, 10], this.getMaterial('white'));
-
-                this.addFaces([1, 16, 17, 3, 13], this.getMaterial('white'));
-                this.addFaces([1, 13, 15, 5, 9], this.getMaterial('white'));
-                this.addFaces([5, 15, 7, 19, 18], this.getMaterial('white'));
-                this.addFaces([3, 11, 7, 15, 13], this.getMaterial('white'));
-            }
-
-            this.geometry.computeBoundingSphere();
-            this.geometry.computeFaceNormals();
-            this.geometry.elementsNeedUpdate = true;
-
         });
     }
 
@@ -273,8 +275,8 @@ export class Dodecahedron {
 
 export default function dodecahedron(command: Command): Observable<(scene: three.Scene) => three.Object3D> {
     return new Observable((subscriber: Subscriber<(scene: three.Scene) => three.Object3D>) => {
-        const dodecahedron = new Dodecahedron(makeObservable(command.controls));
-        subscriber.next(dodecahedron.addMesh.bind(dodecahedron));
+        const dodecahedron = new Dodecahedron(command.controls);
+        subscriber.next((scene: three.Scene): three.Object3D => dodecahedron.addMesh(scene));
         return function() {
             dodecahedron.cleanup();
         };

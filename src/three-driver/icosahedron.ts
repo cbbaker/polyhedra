@@ -1,5 +1,5 @@
-import { Stream } from 'xstream';
-import { Observable, Subscriber, Subscription } from 'rxjs';
+import { Stream, Subscription } from 'xstream';
+import { Observable, Subscriber } from 'rxjs';
 import * as three from 'three';
 import makeObservable from './makeObservable';
 
@@ -15,11 +15,11 @@ export type Command = {
 export class Icosahedron {
     mesh: three.Object3D;
     geometry: three.Geometry;
-    controls: Observable<ControlState>;
+    controls: Stream<ControlState>;
     subscription: Subscription;
     scene: three.Scene;
 
-    constructor(controls: Observable<ControlState>) {
+    constructor(controls: Stream<ControlState>) {
         this.controls = controls;
         this.computeMesh();
     }
@@ -96,11 +96,13 @@ export class Icosahedron {
         this.addFace([10, 7, 5])
         this.addFace([11, 5, 7])
 
-        this.subscription = this.controls.subscribe(({ interpolate }) => {
-            this.computeVertices(interpolate);
-            this.geometry.computeBoundingSphere();
-            this.geometry.computeFaceNormals();
-            this.geometry.elementsNeedUpdate = true;
+        this.subscription = this.controls.subscribe({
+            next: ({ interpolate }) => {
+                this.computeVertices(interpolate);
+                this.geometry.computeBoundingSphere();
+                this.geometry.computeFaceNormals();
+                this.geometry.elementsNeedUpdate = true;
+            }
         });
 
         const material = new three.MeshPhongMaterial({
@@ -129,7 +131,7 @@ export class Icosahedron {
 
 export default function icosahedron(command: Command): Observable<(scene: three.Scene) => three.Object3D> {
     return new Observable((subscriber: Subscriber<(scene: three.Scene) => three.Object3D>) => {
-        const icosahedron = new Icosahedron(makeObservable(command.controls));
+        const icosahedron = new Icosahedron(command.controls);
         subscriber.next(icosahedron.addMesh.bind(icosahedron))
         return function() {
             icosahedron.cleanup();
