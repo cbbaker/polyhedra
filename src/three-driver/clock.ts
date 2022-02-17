@@ -1,3 +1,4 @@
+import { Stream } from 'xstream';
 import { animationFrameScheduler, interval } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
@@ -11,4 +12,4 @@ const clock = interval(0, animationFrameScheduler).pipe(scan((previous: Clock, _
     return { time, delta: time - previous.time };
 }, { time: performance.now(), delta: 0 }));
 
-export default clock;
+export default Stream.from(clock);

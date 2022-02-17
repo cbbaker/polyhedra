@@ -1,8 +1,6 @@
 import * as three from 'three';
-import { Observable, of } from 'rxjs';
-import { withLatestFrom, map, scan, switchMap } from 'rxjs/operators';
 import { Stream } from 'xstream'
-import makeObservable from './makeObservable';
+import sampleCombine from 'xstream/extra/sampleCombine';
 import clock, { Clock } from './clock';
 import dodecahedron, { Command as DodecahedronCommand } from './dodecahedron';
 import icosahedron, { Command as IcosahedronCommand } from './icosahedron';
@@ -81,33 +79,35 @@ function reducer(reducerType: ReducerType): (state: State) => State {
 }
 
 export default function makeThreeDriver() {
-    return function(outgoing$: Stream<Command>): Observable<Config> {
-        const command$ = makeObservable(outgoing$);
-        const state$ = command$.pipe(
-            switchMap((command: Command) => {
-                switch (command.cmdType) {
-                    case 'initialize':
-                        return of({
-                            type: 'initialize',
-                            reducer: initialize(command),
-                        } as Initialize);
-                    case 'dodecahedron':
-                        return dodecahedron(command).pipe(map(command => ({
-                            type: 'addMesh',
-                            reducer: command,
-                        } as AddMesh)));
+    return function(outgoing$: Stream<Command>): Stream<Config> {
+        const state$ = outgoing$.map((command: Command) => {
+            switch (command.cmdType) {
+                case 'initialize':
+                    return Stream.of({
+                        type: 'initialize',
+                        reducer: initialize(command),
+                    } as ReducerType);
 
-                    case 'icosahedron':
-                        return icosahedron(command).pipe(map(command => ({
-                            type: 'addMesh',
-                            reducer: command,
-                        } as AddMesh)));
-                }
-            }),
-            map(reducer),
-            scan((state: State, reducer: ((state: State) => State)) => reducer(state), null),
-        );
-        const frame$ = clock.pipe(withLatestFrom(state$, (_: Clock, state: State) => state));
+                case 'dodecahedron':
+                    return dodecahedron(command).map(addMesh => ({
+                        type: 'addMesh',
+                        reducer: addMesh,
+                    }) as ReducerType);
+
+                case 'icosahedron':
+                    return icosahedron(command).map(addMesh => ({
+                        type: 'addMesh',
+                        reducer: addMesh,
+                    }) as ReducerType);
+            }
+        })
+            .flatten()
+            .map(reducer)
+            .fold((state: State, reducer: ((state: State) => State)) => reducer(state), null)
+
+        const frame$ = clock
+            .compose(sampleCombine(state$))
+            .map(([_, state]: [any, State]): State => state);
 
         frame$.subscribe({
             next({ canvas, camera, renderer, scene }: State) {
@@ -128,6 +128,6 @@ export default function makeThreeDriver() {
             complete: () => { },
         });
 
-        return of({ cmdType: ['dodecahedron', 'icosahedron'] });
+        return Stream.of({ cmdType: ['dodecahedron', 'icosahedron'] });
     }
 }

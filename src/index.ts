@@ -1,4 +1,3 @@
-import { Observable } from 'rxjs';
 import { run } from '@cycle/run';
 import storageDriver, { ResponseCollection, StorageRequest } from '@cycle/storage';
 import { Stream } from 'xstream';
@@ -45,7 +44,7 @@ function getState(url: string): string {
     return found[1];
 }
 
-function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Observable<Config>, storage: ResponseCollection }) {
+function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Stream<Config>, storage: ResponseCollection }) {
     const state$ = DOM.select('.nav-link')
         .events('click')
         .map((event: Event) => {
@@ -53,7 +52,7 @@ function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Observab
             return (event.currentTarget as Element).id;
         })
         .startWith(getState(window.location.href))
-    const config$ = Stream.from(three) as Stream<Config>;
+    const config$ = three;
     const validatedState$ = Stream
         .combine(state$, config$)
         .filter(([state, config]: [string, Config]) => config.cmdType.indexOf(state) >= 0)
@@ -126,7 +125,7 @@ function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Observab
     return { vdom: vdom$, command: command$, storage: storage$ };
 }
 
-function main(sources: { DOM: MainDOMSource, three: Observable<Config>, storage: ResponseCollection }) {
+function main(sources: { DOM: MainDOMSource, three: Stream<Config>, storage: ResponseCollection }) {
     const { vdom: vdom$, command: command$, storage: storage$ } = controls(sources)
     const sinks = {
         DOM: vdom$,

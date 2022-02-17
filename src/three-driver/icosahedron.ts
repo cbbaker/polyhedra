@@ -1,7 +1,5 @@
-import { Stream, Subscription } from 'xstream';
-import { Observable, Subscriber } from 'rxjs';
+import { Stream, Subscription, Listener } from 'xstream';
 import * as three from 'three';
-import makeObservable from './makeObservable';
 
 export type ControlState = {
     interpolate: number;
@@ -118,7 +116,11 @@ export class Icosahedron {
         return this.mesh;
     }
 
-    cleanup() {
+    start(listener: Listener<(scene: three.Scene) => three.Object3D>) {
+        listener.next((scene: three.Scene): three.Object3D => this.addMesh(scene));
+    }
+
+    stop() {
         if (this.scene) {
             this.scene.remove(this.mesh);
         }
@@ -128,13 +130,7 @@ export class Icosahedron {
     }
 }
 
-
-export default function icosahedron(command: Command): Observable<(scene: three.Scene) => three.Object3D> {
-    return new Observable((subscriber: Subscriber<(scene: three.Scene) => three.Object3D>) => {
-        const icosahedron = new Icosahedron(command.controls);
-        subscriber.next(icosahedron.addMesh.bind(icosahedron))
-        return function() {
-            icosahedron.cleanup();
-        }
-    });
+export default function icosahedron(command: Command): Stream<(scene: three.Scene) => three.Object3D> {
+    const icosahedron = new Icosahedron(command.controls);
+    return Stream.create(icosahedron);
 }
