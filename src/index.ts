@@ -1,39 +1,12 @@
 import { run } from '@cycle/run';
 import storageDriver, { ResponseCollection, StorageRequest } from '@cycle/storage';
 import { Stream } from 'xstream';
-import { div, span, ul, li, form, canvas, nav, a, button, makeDOMDriver, MainDOMSource, VNode } from '@cycle/dom';
+import { div, form, canvas, makeDOMDriver, MainDOMSource, VNode } from '@cycle/dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import makeThreeDriver, { Config, Command } from './three-driver';
 import dodecahedronControls from './dodecahedronControls';
 import icosahedronControls from './icosahedronControls';
-
-function navMenu(items: { id: string, href: string, title: string }[]) {
-    return nav('.navbar.navbar-expand-lg.navbar-light.bg-light', {}, [
-        div('.container-fluid', {}, [
-            a('.navbar-brand', { attrs: { href: '/' } }, 'Polyhedra'),
-            button('.navbar-toggler', {
-                attrs: {
-                    type: 'button',
-                    'data-bs-toggle': 'collapse',
-                    'data-bs-target': '#navbarNav',
-                    'aria-controls': 'navbarNav',
-                    'aria-expaned': false,
-                    'aria-label': 'Toggle navagation',
-                }
-            }, [
-                span('.navbar-toggler-icon'),
-            ]),
-            div('#navbarNav.collapse.navbar-collapse', {}, [
-                ul('.navbar-nav', {}, [
-                    ...items.map(({ id, href, title }) =>
-                        li('nav-item', {}, [
-                            a('.nav-link', { attrs: { href, id } }, [title])
-                        ])),
-                ]),
-            ]),
-        ]),
-    ]);
-}
+import navMenu from './navMenu';
 
 function getState(url: string): string {
     const found = url.match(/\/([^\/]*)$/)
@@ -81,15 +54,11 @@ function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Stream<C
         .flatten();
 
     const vdom$ = Stream.combine(control$, config$)
-        .map(([{ vdom: controls$ }, config]: [{ vdom: Stream<VNode> }, Config]) => {
+        .map(([{ vdom: controls$, command: { cmdType: currentCmd } }, config]:
+            [{ vdom: Stream<VNode>, command: { cmdType: string } }, Config]) => {
             return controls$.map((controls) =>
                 div('.row', {}, [
-                    navMenu(config.cmdType.map((cmdType: string) => {
-                        const id = cmdType.toLocaleLowerCase();
-                        const href = '/' + id;
-                        const title = cmdType[0].toLocaleUpperCase() + id.slice(1);
-                        return { id, href, title };
-                    })),
+                    navMenu(currentCmd, config),
                     div('.col-12.col-md-8', {}, [
                         canvas('#canvas', {
                             style: {
