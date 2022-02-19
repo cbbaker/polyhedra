@@ -10,6 +10,18 @@ export type Command = {
     controls: Stream<ControlState>;
 }
 
+export const schema = [
+    {
+        type: 'range',
+        id: 'interpolate',
+        title: 'Amount',
+        min: 0.5,
+        max: 1,
+        step: 0.01,
+        initial: 0.62,
+    },
+];
+
 export class Icosahedron {
     mesh: three.Object3D;
     geometry: three.Geometry;

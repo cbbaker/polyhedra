@@ -17,7 +17,7 @@ function getState(url: string): string {
     return found[1];
 }
 
-function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Stream<Config>, storage: ResponseCollection }) {
+function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Stream<Config[]>, storage: ResponseCollection }) {
     const state$ = DOM.select('.nav-link')
         .events('click')
         .map((event: Event) => {
@@ -25,18 +25,19 @@ function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Stream<C
             return (event.currentTarget as Element).id;
         })
         .startWith(getState(window.location.href))
-    const config$ = three;
+    const configs$ = three;
     const validatedState$ = Stream
-        .combine(state$, config$)
-        .filter(([state, config]: [string, Config]) => config.cmdType.indexOf(state) >= 0)
+        .combine(state$, configs$)
+        .map(([state, configs]: [string, Config[]]) => configs.find((config: Config) => config.cmdType === state))
+        .filter((config: Config) => config !== undefined)
 
     const control$ = validatedState$
-        .map(([cmdType]: [string, Config]) => {
-            switch (cmdType) {
+        .map((config: Config) => {
+            switch (config.cmdType) {
                 case 'icosahedron':
-                    return icosahedronControls(DOM, storage);
+                    return icosahedronControls(DOM, config.schema, storage);
                 case 'dodecahedron':
-                    return dodecahedronControls(DOM, storage);
+                    return dodecahedronControls(DOM, config.schema, storage);
             }
         })
         .startWith({
@@ -53,12 +54,12 @@ function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Stream<C
         .map(({ storage }: { storage: Stream<StorageRequest> }) => storage)
         .flatten();
 
-    const vdom$ = Stream.combine(control$, config$)
-        .map(([{ vdom: controls$, command: { cmdType: currentCmd } }, config]:
-            [{ vdom: Stream<VNode>, command: { cmdType: string } }, Config]) => {
+    const vdom$ = Stream.combine(control$, configs$)
+        .map(([{ vdom: controls$, command: { cmdType: currentCmd } }, configs]:
+            [{ vdom: Stream<VNode>, command: { cmdType: string } }, Config[]]) => {
             return controls$.map((controls) =>
                 div('.row', {}, [
-                    navMenu(currentCmd, config),
+                    navMenu(currentCmd, configs),
                     div('.col-12.col-md-8', {}, [
                         canvas('#canvas', {
                             style: {
@@ -94,7 +95,7 @@ function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Stream<C
     return { vdom: vdom$, command: command$, storage: storage$ };
 }
 
-function main(sources: { DOM: MainDOMSource, three: Stream<Config>, storage: ResponseCollection }) {
+function main(sources: { DOM: MainDOMSource, three: Stream<Config[]>, storage: ResponseCollection }) {
     const { vdom: vdom$, command: command$, storage: storage$ } = controls(sources)
     const sinks = {
         DOM: vdom$,

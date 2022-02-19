@@ -1,12 +1,14 @@
 import * as three from 'three';
 import { Stream } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine';
-import clock, { Clock } from './clock';
-import dodecahedron, { Command as DodecahedronCommand } from './dodecahedron';
-import icosahedron, { Command as IcosahedronCommand } from './icosahedron';
+import clock from './clock';
+import { Schema } from './schema';
+import dodecahedron, { Command as DodecahedronCommand, schema as dodecahedronSchema } from './dodecahedron';
+import icosahedron, { Command as IcosahedronCommand, schema as icosahedronSchema } from './icosahedron';
 
 export type Config = {
-    cmdType: string[];
+    cmdType: string;
+    schema: Schema;
 }
 
 type InitializeCommand = {
@@ -79,7 +81,7 @@ function reducer(reducerType: ReducerType): (state: State) => State {
 }
 
 export default function makeThreeDriver() {
-    return function(outgoing$: Stream<Command>): Stream<Config> {
+    return function(outgoing$: Stream<Command>): Stream<Config[]> {
         const state$ = outgoing$.map((command: Command) => {
             switch (command.cmdType) {
                 case 'initialize':
@@ -128,6 +130,15 @@ export default function makeThreeDriver() {
             complete: () => { },
         });
 
-        return Stream.of({ cmdType: ['dodecahedron', 'icosahedron'] });
+        return Stream.of([
+            {
+                cmdType: 'dodecahedron',
+                schema: dodecahedronSchema,
+            },
+            {
+                cmdType: 'icosahedron',
+                schema: icosahedronSchema,
+            },
+        ] as Config[]);
     }
 }

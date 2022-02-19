@@ -1,8 +1,8 @@
 import { Config } from './three-driver';
 import { div, span, ul, li, nav, a, button, VNode } from '@cycle/dom';
 
-export default function navMenu(currentCmd: string, config: Config): VNode {
-    const items = config.cmdType.map((cmdType: string) => {
+export default function navMenu(currentCmd: string, configs: Config[]): VNode {
+    const items = configs.map((config: Config) => config.cmdType).map((cmdType: string) => {
         const id = cmdType.toLocaleLowerCase();
         const href = '/' + id;
         const title = cmdType[0].toLocaleUpperCase() + id.slice(1);

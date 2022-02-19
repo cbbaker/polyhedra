@@ -15,6 +15,57 @@ export type Command = {
     controls: Stream<ControlState>;
 }
 
+export const schema = [
+    {
+        type: 'boolean',
+        id: 'showShell',
+        title: 'Show shell',
+        initial: true,
+    },
+    {
+        type: 'boolean',
+        id: 'showSkeleton',
+        title: 'Show skeleton',
+        initial: false,
+    },
+    {
+        type: 'range',
+        id: 'opacity',
+        title: 'Opacity',
+        min: 0,
+        max: 1,
+        step: 0.05,
+        initial: 0.5,
+    },
+    {
+        type: 'range',
+        id: 'cubeCount',
+        title: 'Cube count',
+        min: 0,
+        max: 5,
+        step: 1,
+        initial: 0,
+    },
+    {
+        type: 'range',
+        id: 'evenTetrahedraCount',
+        title: 'Even Tetrahedra count',
+        min: 0,
+        max: 5,
+        step: 1,
+        initial: 0,
+    },
+    {
+        type: 'range',
+        id: 'oddTetrahedraCount',
+        title: 'Odd Tetrahedra count',
+        min: 0,
+        max: 5,
+        step: 1,
+        initial: 0,
+    },
+];
+
 type Permutation = number[];
 
 function permutationsEqual(p1: Permutation, p2: Permutation): boolean {
