@@ -1,3 +1,5 @@
+import * as three from 'three';
+
 export type Range = {
     type: 'range';
     id: string;
@@ -15,6 +17,13 @@ export type Boolean = {
     initial: boolean;
 };
 
-export type Item = Range | Boolean;
+export type Quaternion = {
+    type: 'quaternion';
+    id: string;
+    title: string;
+    initial: three.Quaternion;
+}
+
+export type Item = Range | Boolean | Quaternion;
 
 export type Schema = Item[];

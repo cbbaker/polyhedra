@@ -1,5 +1,6 @@
 import { run } from '@cycle/run';
 import storageDriver, { ResponseCollection, StorageRequest } from '@cycle/storage';
+import { timeDriver, TimeSource } from '@cycle/time';
 import { Stream } from 'xstream';
 import { div, form, canvas, makeDOMDriver, MainDOMSource, VNode } from '@cycle/dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -7,6 +8,13 @@ import makeThreeDriver, { Config, Command } from './three-driver';
 import dodecahedronControls from './dodecahedronControls';
 import icosahedronControls from './icosahedronControls';
 import navMenu from './navMenu';
+
+export type Sources = {
+		DOM: MainDOMSource,
+		three: Stream<Config[]>,
+		storage: ResponseCollection,
+		time: TimeSource,
+}
 
 function getState(url: string): string {
     const found = url.match(/\/([^\/]*)$/)
@@ -17,7 +25,7 @@ function getState(url: string): string {
     return found[1];
 }
 
-function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Stream<Config[]>, storage: ResponseCollection }) {
+function controls({ DOM, three, storage, time }: Sources) {
     const state$ = DOM.select('.nav-link')
         .events('click')
         .map((event: Event) => {
@@ -35,9 +43,9 @@ function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Stream<C
         .map((config: Config) => {
             switch (config.cmdType) {
                 case 'icosahedron':
-                    return icosahedronControls(DOM, config.schema, storage);
+                    return icosahedronControls(DOM, config.schema, storage, time);
                 case 'dodecahedron':
-                    return dodecahedronControls(DOM, config.schema, storage);
+                    return dodecahedronControls(DOM, config.schema, storage, time);
             }
         })
         .startWith({
@@ -95,7 +103,7 @@ function controls({ DOM, three, storage }: { DOM: MainDOMSource, three: Stream<C
     return { vdom: vdom$, command: command$, storage: storage$ };
 }
 
-function main(sources: { DOM: MainDOMSource, three: Stream<Config[]>, storage: ResponseCollection }) {
+function main(sources: Sources) {
     const { vdom: vdom$, command: command$, storage: storage$ } = controls(sources)
     const sinks = {
         DOM: vdom$,
@@ -109,6 +117,7 @@ const drivers = {
     DOM: makeDOMDriver('#app'),
     three: makeThreeDriver(),
     storage: storageDriver,
+		time: timeDriver,
 };
 
 run(main, drivers);

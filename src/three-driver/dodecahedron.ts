@@ -2,20 +2,27 @@ import { Stream, Subscription, Listener } from 'xstream';
 import * as three from 'three';
 
 export type ControlState = {
-    opacity: number;
-    showShell: boolean;
-    showSkeleton: boolean;
-    cubeCount: number;
-    evenTetrahedraCount: number;
-    oddTetrahedraCount: number;
+    orientation: Stream<three.Quaternion>;
+    opacity: Stream<number>;
+    showShell: Stream<boolean>;
+    showSkeleton: Stream<boolean>;
+    cubeCount: Stream<number>;
+    evenTetrahedraCount: Stream<number>;
+    oddTetrahedraCount: Stream<number>;
 }
 
 export type Command = {
     cmdType: 'dodecahedron';
-    controls: Stream<ControlState>;
+    controls: ControlState;
 }
 
 export const schema = [
+    {
+        type: 'quaternion',
+        id: 'orientation',
+        title: 'Orientation',
+        initial: new three.Quaternion(0, 0, 0, 1),
+    },
     {
         type: 'boolean',
         id: 'showShell',
@@ -130,14 +137,15 @@ const cubeOperations = computeCubeOperations(operations);
 export class Dodecahedron {
     mesh: three.Object3D;
     geometry: three.Geometry;
-    controls: Stream<ControlState>;
-    subscription: Subscription;
+    controls: ControlState;
+    subscriptions: Subscription[];
     materials: Map<string, three.Material>;
     colors: string[];
     scene: three.Scene;
 
-    constructor(controls: Stream<ControlState>) {
+    constructor(controls: ControlState) {
         this.controls = controls;
+        this.subscriptions = [];
         this.createMaterials();
         this.computeMesh();
     }
@@ -248,8 +256,23 @@ export class Dodecahedron {
             return material
         }));
 
-        this.subscription = this.controls.subscribe({
-            next: ({ opacity, showSkeleton, showShell, cubeCount, evenTetrahedraCount, oddTetrahedraCount }) => {
+        this.subscriptions.push(this.controls.orientation.subscribe({
+            next: (orientation: three.Quaternion) => {
+                this.mesh.quaternion.copy(orientation);
+            }
+        }));
+
+        const controls$ = Stream.combine(
+            this.controls.opacity,
+            this.controls.showShell,
+            this.controls.showSkeleton,
+            this.controls.cubeCount,
+            this.controls.evenTetrahedraCount,
+            this.controls.oddTetrahedraCount,
+        );
+
+        this.subscriptions.push(controls$.subscribe({
+            next: ([opacity, showShell, showSkeleton, cubeCount, evenTetrahedraCount, oddTetrahedraCount]) => {
                 this.geometry.faces = [];
 
                 this.updateMaterials(opacity);
@@ -303,7 +326,7 @@ export class Dodecahedron {
                 this.geometry.elementsNeedUpdate = true;
 
             }
-        });
+        }));
     }
 
     addMesh(scene: three.Scene): three.Object3D {
@@ -320,9 +343,7 @@ export class Dodecahedron {
         if (this.scene) {
             this.scene.remove(this.mesh);
         }
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
+        this.subscriptions.forEach(subscription => subscription.unsubscribe());
     }
 }
 

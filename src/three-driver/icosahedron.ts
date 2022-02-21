@@ -2,15 +2,22 @@ import { Stream, Subscription, Listener } from 'xstream';
 import * as three from 'three';
 
 export type ControlState = {
-    interpolate: number;
+		orientation: Stream<three.Quaternion>;
+    interpolate: Stream<number>;
 }
 
 export type Command = {
     cmdType: 'icosahedron';
-    controls: Stream<ControlState>;
+    controls: ControlState;
 }
 
 export const schema = [
+    {
+        type: 'quaternion',
+        id: 'orientation',
+        title: 'Orientation',
+        initial: new three.Quaternion(0, 0, 0, 1),
+    },
     {
         type: 'range',
         id: 'interpolate',
@@ -25,12 +32,13 @@ export const schema = [
 export class Icosahedron {
     mesh: three.Object3D;
     geometry: three.Geometry;
-    controls: Stream<ControlState>;
-    subscription: Subscription;
+    controls: ControlState;
+    subscriptions: Subscription[];
     scene: three.Scene;
 
-    constructor(controls: Stream<ControlState>) {
+    constructor(controls: ControlState) {
         this.controls = controls;
+				this.subscriptions = [];
         this.computeMesh();
     }
 
@@ -106,20 +114,27 @@ export class Icosahedron {
         this.addFace([10, 7, 5])
         this.addFace([11, 5, 7])
 
-        this.subscription = this.controls.subscribe({
-            next: ({ interpolate }) => {
+        this.subscriptions.push(this.controls.interpolate.subscribe({
+            next: (interpolate) => {
                 this.computeVertices(interpolate);
                 this.geometry.computeBoundingSphere();
                 this.geometry.computeFaceNormals();
                 this.geometry.elementsNeedUpdate = true;
             }
-        });
+        }));
 
         const material = new three.MeshPhongMaterial({
             vertexColors: true,
         });
 
         this.mesh = new three.Mesh(this.geometry, material);
+
+        this.subscriptions.push(this.controls.orientation.subscribe({
+            next: (orientation: three.Quaternion) => {
+                this.mesh.quaternion.copy(orientation);
+            }
+        }));
+
     }
 
     addMesh(scene: three.Scene): three.Object3D {
@@ -136,9 +151,7 @@ export class Icosahedron {
         if (this.scene) {
             this.scene.remove(this.mesh);
         }
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
+        this.subscriptions.forEach(subscription => subscription.unsubscribe());
     }
 }
 

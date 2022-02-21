@@ -1,3 +1,4 @@
+import * as three from 'three';
 import { Stream } from 'xstream';
 import dropRepeats from 'xstream/extra/dropRepeats';
 import { div, h4, MainDOMSource, VNode } from '@cycle/dom';
@@ -20,10 +21,14 @@ type CheckboxSchemaEntry = {
 
 type SchemaEntry = SliderSchemaEntry | CheckboxSchemaEntry;
 
+type Values = number | boolean | number[];
+
+type Table = Record<string, Values>;
+
 function savedControls(
     cmdType: string,
-    defaults: Record<string, number | boolean>,
-    storage: ResponseCollection): Stream<Record<string, number | boolean>> {
+    defaults: Table,
+    storage: ResponseCollection): Stream<Table> {
     return storage.local.getItem(`controls:${cmdType}`)
         .compose(dropRepeats())
         .map(JSON.parse)
@@ -61,8 +66,8 @@ function createControlSchema(schema: Schema) {
 
 function makeControlStreams(cmdType: string, DOM: MainDOMSource, storage: ResponseCollection, controlSchema: SchemaEntry[]) {
     const controls: (Stream<VNode>)[] = [];
-    const values: (Stream<number | boolean>)[] = [];
-    const defaults = controlSchema.reduce((defaults: Record<string, number | boolean>, entry) => {
+    const values: (Stream<Values>)[] = [];
+    const defaults = controlSchema.reduce((defaults: Table, entry) => {
         defaults[entry.props.id] = entry.props.value;
         return defaults;
     }, {});
@@ -110,10 +115,11 @@ export default function createControls(
                 ...controls,
             ]));
 
+    const keys = controlSchema.map(({ props: { id } }: SchemaEntry) => id);
+
     const controls$ = Stream.combine(...values)
         .map((values) => {
-            const keys = controlSchema.map(({ props: { id } }) => id);
-            const result = {} as Record<string, number | boolean>;
+            const result = {} as Table;
             for (let i = 0; i < keys.length; i++) {
                 result[keys[i]] = values[i];
             }
@@ -127,7 +133,13 @@ export default function createControls(
         value: JSON.stringify(controls),
     }) as StorageRequest);
 
-    const command = { cmdType, controls: controls$ } as Command;
+    const command = {
+        cmdType,
+        controls: keys.reduce((controls: Record<string, Stream<Values>>, key: string, index: number) => {
+            controls[key] = values[index];
+            return controls
+        }, {}),
+    } as unknown as Command;
 
     return { vdom: vdom$, command, storage: storage$ };
 }

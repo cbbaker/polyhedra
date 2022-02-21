@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -34,9 +35,16 @@ module.exports = {
             title: 'Polyhedra',
             template: 'src/index.html',
         }),
+        new webpack.ProvidePlugin({
+            process: 'process/browser',
+        }),
     ],
     resolve: {
         extensions: [ '.tsx', '.ts', '.js' ],
+        fallback: {
+            'assert': false,
+            'process': false,
+        }
     },
     output: {
         filename: 'bundle.js',
