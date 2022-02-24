@@ -1,34 +1,33 @@
+import { Stream } from 'xstream';
 import { Vector3 } from 'three';
-import { MainDOMSource } from '@cycle/dom';
-import { ResponseCollection } from '@cycle/storage';
+import { MainDOMSource, VNode } from '@cycle/dom';
+import { StorageRequest, ResponseCollection } from '@cycle/storage';
 import { TimeSource } from '@cycle/time';
-import { Schema } from './three-driver/schema';
+import { Config } from './three-driver/schema';
 import { Command } from './three-driver';
-import { Command as DodecahedronCommand } from './three-driver/dodecahedron';
 import simpleRotation from './simpleRotation';
 import createControls from './createControls';
 
 export default function dodecahedronControls(
 		DOM: MainDOMSource,
-		schema: Schema,
-		storage: ResponseCollection,
+		config: Config,
+		storageResponses: ResponseCollection,
 		time: TimeSource,
-) {
-		const controlSchema = schema.filter(({ id }) => (id !== 'orientation'));
-		const controls = createControls('dodecahedron', 'Visibility', controlSchema, DOM, storage);
+): { vdom: Stream<VNode>, command: Command, storage: Stream<StorageRequest> } {
+		const controlSchema = config.schema.filter(({ id }) => (id !== 'orientation'));
+
+		const { vdom, props, storage } = createControls('dodecahedron', 'Visibility', controlSchema, DOM, storageResponses);
 
 		const orientation$ = simpleRotation(time, new Vector3(0.001, 0.001, 0.001));
 
-		const inner = (controls.command as DodecahedronCommand).controls;
-
-		return {
-				...controls,
-				command: {
-						cmdType: 'dodecahedron',
-						controls: {
-								...inner,
-								orientation: orientation$,
-						}
-				} as Command,
+		const newProps = {
+				...props,
+				orientation: orientation$,
 		};
+
+		const producer = new config.ctor(newProps);
+
+		const command: Command = { cmdType: 'addMesh', props: { producer } };
+
+		return { vdom, command, storage };
 }

@@ -1,15 +1,11 @@
 import { Stream, Subscription, Listener } from 'xstream';
 import * as three from 'three';
+import { ControlState as Controls } from './schema';
 import MeshProducer from './MeshProducer';
 
-export type ControlState = {
+type ControlState = {
 		orientation: Stream<three.Quaternion>;
     interpolate: Stream<number>;
-}
-
-export type Command = {
-    cmdType: 'icosahedron';
-    controls: ControlState;
 }
 
 export const schema = [
@@ -30,11 +26,25 @@ export const schema = [
     },
 ];
 
+function isControlState(props: Record<string, Stream<unknown>>): props is ControlState {
+		return schema.every(item => {
+				const prop = props[item.id];
+				if (prop === undefined) {
+						return false;
+				}
+				return true;
+		});
+}
+
 class Icosahedron extends MeshProducer {
     controls: ControlState;
 
-    constructor(controls: ControlState) {
+    constructor(controls: Controls) {
 				super();
+
+				if (!isControlState(controls)) {
+						throw new Error('Icosahedron: invalid controls');
+				}
         this.controls = controls;
         this.computeMesh();
     }
@@ -135,7 +145,11 @@ class Icosahedron extends MeshProducer {
     }
 };
 
-export default function icosahedron(command: Command): Stream<(scene: three.Scene) => three.Object3D> {
-    const icosahedron = new Icosahedron(command.controls);
-    return Stream.create(icosahedron);
+const config = {
+		id: 'icosahedron',
+		title: 'Icosahedron',
+		schema,
+		ctor: Icosahedron,
 };
+
+export default config;

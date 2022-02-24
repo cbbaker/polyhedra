@@ -4,7 +4,8 @@ import { timeDriver, TimeSource } from '@cycle/time';
 import { Stream } from 'xstream';
 import { div, form, canvas, makeDOMDriver, MainDOMSource, VNode } from '@cycle/dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import makeThreeDriver, { Config, Command } from './three-driver';
+import makeThreeDriver, { Command } from './three-driver';
+import { Config } from './three-driver/schema';
 import dodecahedronControls from './dodecahedronControls';
 import icosahedronControls from './icosahedronControls';
 import stellaOctangulaControls from './stellaOctangulaControls';
@@ -37,25 +38,27 @@ function controls({ DOM, three, storage, time }: Sources) {
     const configs$ = three;
     const validatedState$ = Stream
         .combine(state$, configs$)
-        .map(([state, configs]: [string, Config[]]) => configs.find((config: Config) => config.cmdType === state))
+        .map(([state, configs]: [string, Config[]]) => configs.find((config: Config) => config.id === state))
         .filter((config: Config) => config !== undefined)
 
-    const control$ = validatedState$
+		const command: Command = { cmdType: 'initialize', props: { canvasId: 'canvas' } };
+
+    const control$: Stream<{vdom: Stream<VNode>, command: Command, storage: Stream<StorageRequest> }> = validatedState$
         .map((config: Config) => {
-            switch (config.cmdType) {
+            switch (config.id) {
                 case 'icosahedron':
-                    return icosahedronControls(DOM, config.schema, storage, time);
+                    return icosahedronControls(DOM, config, storage, time);
                 case 'stellaOctangula':
-                    return stellaOctangulaControls(DOM, config.schema, storage, time);
+                    return stellaOctangulaControls(DOM, config, storage, time);
                 case 'dodecahedron':
-                    return dodecahedronControls(DOM, config.schema, storage, time);
+                    return dodecahedronControls(DOM, config, storage, time);
             }
         })
         .startWith({
             vdom: Stream.of(div()),
-            command: { cmdType: 'initialize', props: { canvasId: 'canvas' } },
+            command,
             storage: Stream.from([]),
-        })
+        });
 
     const command$ = control$
         .map(({ command }: { command: Command }) => command)

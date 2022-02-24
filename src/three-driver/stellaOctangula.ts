@@ -3,15 +3,14 @@ import {
 		Geometry,
 		Mesh,
 		MeshPhongMaterial,
-		Object3D,
 		Quaternion,
-		Scene,
 		Vector3,
 } from 'three';
 import { Stream } from 'xstream';
+import { ControlState as Controls } from './schema';
 import MeshProducer from './MeshProducer';
 
-export type ControlState = {
+type ControlState = {
 		orientation: Stream<Quaternion>;
 		coreOpacity: Stream<number>;
 		coreHue: Stream<number>;
@@ -22,12 +21,7 @@ export type ControlState = {
 		caseHue: Stream<number>;
 };
 
-export type Command = {
-		cmdType: 'stellaOctangula';
-		controls: ControlState;
-};
-
-export const schema = [{
+const schema = [{
 				type: 'quaternion',
 				id: 'orientation',
 				title: 'Orientation',
@@ -90,13 +84,27 @@ export const schema = [{
 				initial: 1,
 		}];
 
+function isControlState(props: Record<string, Stream<unknown>>): props is ControlState {
+		return schema.every(item => {
+				const prop = props[item.id];
+				if (prop === undefined) {
+						return false;
+				}
+				return true;
+		});
+}
+
 class StellaOctangula extends MeshProducer {
 		controls: ControlState;
 		materials: MeshPhongMaterial[];
 
-		constructor(controls: ControlState) {
+		constructor(controls: Controls) {
 				super();
 				
+				if (!isControlState(controls)) {
+						throw new Error('Stella Octangula: invalid controls');
+				}
+
 				this.controls = controls;
 				this.geometry = new Geometry();
 				this.createMaterials();
@@ -239,7 +247,12 @@ class StellaOctangula extends MeshProducer {
 		}
 };
 
-export default function stellaOctangula(command: Command): Stream<(scene: Scene) => Object3D> {
-    const producer = new StellaOctangula(command.controls);
-    return Stream.create(producer);
+const config = {
+		id: 'stellaOctangula',
+		title: 'Stella Octangula',
+		schema,
+		ctor: StellaOctangula,
 };
+
+export default config;
+

@@ -1,8 +1,9 @@
 import { Stream } from 'xstream';
 import * as three from 'three';
+import { ControlState as Controls } from './schema';
 import MeshProducer from './MeshProducer';
 
-export type ControlState = {
+type ControlState = {
     orientation: Stream<three.Quaternion>;
     opacity: Stream<number>;
     showShell: Stream<boolean>;
@@ -12,12 +13,7 @@ export type ControlState = {
     oddTetrahedraCount: Stream<number>;
 }
 
-export type Command = {
-    cmdType: 'dodecahedron';
-    controls: ControlState;
-}
-
-export const schema = [
+const schema = [
     {
         type: 'quaternion',
         id: 'orientation',
@@ -73,6 +69,16 @@ export const schema = [
         initial: 0,
     },
 ];
+
+function isControlState(props: Record<string, Stream<unknown>>): props is ControlState {
+		return schema.every(item => {
+				const prop = props[item.id];
+				if (prop === undefined) {
+						return false;
+				}
+				return true;
+		});
+}
 
 type Permutation = number[];
 
@@ -134,14 +140,17 @@ function computeCubeOperations(operations: Permutation[]): Permutation[] {
 
 const cubeOperations = computeCubeOperations(operations);
 
-
 class Dodecahedron extends MeshProducer {
     controls: ControlState;
     materials: Map<string, three.Material>;
     colors: string[];
 
-    constructor(controls: ControlState) {
+    constructor(controls: Controls) {
 				super();
+
+				if (!isControlState(controls)) {
+						throw new Error('Dodecahedron: invalid controls');
+				}
 
         this.controls = controls;
         this.createMaterials();
@@ -328,7 +337,11 @@ class Dodecahedron extends MeshProducer {
     }
 };
 
-export default function dodecahedron(command: Command): Stream<(scene: three.Scene) => three.Object3D> {
-    const dodecahedron = new Dodecahedron(command.controls);
-    return Stream.create(dodecahedron);
+const config = {
+		id: 'dodecahedron',
+		title: 'Dodecahedron',
+		schema,
+		ctor: Dodecahedron,
 };
+
+export default config;

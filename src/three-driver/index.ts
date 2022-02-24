@@ -1,16 +1,11 @@
 import * as three from 'three';
-import { Stream } from 'xstream'
+import { Stream, Producer } from 'xstream'
 import sampleCombine from 'xstream/extra/sampleCombine';
 import clock from './clock';
-import { Schema } from './schema';
-import dodecahedron, { Command as DodecahedronCommand, schema as dodecahedronSchema } from './dodecahedron';
-import icosahedron, { Command as IcosahedronCommand, schema as icosahedronSchema } from './icosahedron';
-import stellaOctangula, { Command as StellaOctangulaCommand, schema as stellaOctangulaSchema } from './stellaOctangula';
-
-export type Config = {
-    cmdType: string;
-    schema: Schema;
-}
+import { Schema, Config } from './schema';
+import dodecahedronConfig from './dodecahedron';
+import icosahedronConfig from './icosahedron';
+import stellaOctangulaConfig from './stellaOctangula';
 
 type InitializeCommand = {
     cmdType: 'initialize';
@@ -19,11 +14,16 @@ type InitializeCommand = {
     }
 }
 
-export type Command
-		= InitializeCommand
-		| DodecahedronCommand
-		| IcosahedronCommand
-		| StellaOctangulaCommand;
+type MeshAdder = (scene: three.Scene) => three.Object3D;
+
+type AddMeshCommand = {
+		cmdType: 'addMesh';
+		props: {
+				producer: Producer<MeshAdder>
+		}
+}
+
+export type Command = InitializeCommand | AddMeshCommand;
 
 type State = {
     canvas: HTMLCanvasElement;
@@ -95,23 +95,12 @@ export default function makeThreeDriver() {
                         reducer: initialize(command),
                     } as ReducerType);
 
-                case 'dodecahedron':
-                    return dodecahedron(command).map(addMesh => ({
-                        type: 'addMesh',
-                        reducer: addMesh,
-                    }) as ReducerType);
-
-                case 'icosahedron':
-                    return icosahedron(command).map(addMesh => ({
-                        type: 'addMesh',
-                        reducer: addMesh,
-                    }) as ReducerType);
-
-                case 'stellaOctangula':
-                    return stellaOctangula(command).map(addMesh => ({
-                        type: 'addMesh',
-                        reducer: addMesh,
-                    }) as ReducerType);
+								case 'addMesh':
+										return Stream.create(command.props.producer)
+														.map((adder: MeshAdder) => ({
+																type: 'addMesh',
+																reducer: adder,
+														} as ReducerType));
             }
         })
             .flatten()
@@ -141,19 +130,6 @@ export default function makeThreeDriver() {
             complete: () => { },
         });
 
-        return Stream.of([
-            {
-                cmdType: 'dodecahedron',
-                schema: dodecahedronSchema,
-            },
-            {
-                cmdType: 'icosahedron',
-                schema: icosahedronSchema,
-            },
-            {
-                cmdType: 'stellaOctangula',
-                schema: stellaOctangulaSchema,
-            },
-        ] as Config[]);
+        return Stream.of([ dodecahedronConfig, icosahedronConfig, stellaOctangulaConfig ] as Config[]);
     }
 }

@@ -1,4 +1,6 @@
+import { Stream } from 'xstream'
 import * as three from 'three';
+import MeshProducer from './MeshProducer';
 
 export type Range = {
     type: 'range';
@@ -27,3 +29,19 @@ export type Quaternion = {
 export type Item = Range | Boolean | Quaternion;
 
 export type Schema = Item[];
+
+export type Value = number | boolean | three.Quaternion;
+
+export type ControlState = Record<string, Stream<Value>>;
+
+export interface MeshProducerConstructor {
+		new (controlState: ControlState): MeshProducer;
+}
+
+export type Config = {
+		id: string;
+		title: string;
+		schema: Schema;
+		ctor: MeshProducerConstructor;
+}
+

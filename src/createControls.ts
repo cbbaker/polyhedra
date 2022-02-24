@@ -1,9 +1,7 @@
-import * as three from 'three';
 import { Stream } from 'xstream';
 import dropRepeats from 'xstream/extra/dropRepeats';
 import { div, h4, MainDOMSource, VNode } from '@cycle/dom';
 import { ResponseCollection, StorageRequest } from '@cycle/storage';
-import { Command } from './three-driver/index';
 import { Schema, Item } from './three-driver/schema';
 import isolate from '@cycle/isolate';
 import Slider, { Props as SliderProps } from './slider';
@@ -103,7 +101,7 @@ export default function createControls(
     schema: Schema,
     DOM: MainDOMSource,
     storage: ResponseCollection,
-): { vdom: Stream<VNode>, command: Command, storage: Stream<StorageRequest> } {
+): { vdom: Stream<VNode>, props: Record<string, Stream<Values>>, storage: Stream<StorageRequest> } {
     const controlSchema = createControlSchema(schema);
 
     const { controls, values } = makeControlStreams(cmdType, DOM, storage, controlSchema);
@@ -133,13 +131,10 @@ export default function createControls(
         value: JSON.stringify(controls),
     }) as StorageRequest);
 
-    const command = {
-        cmdType,
-        controls: keys.reduce((controls: Record<string, Stream<Values>>, key: string, index: number) => {
-            controls[key] = values[index];
-            return controls
-        }, {}),
-    } as unknown as Command;
+    const props = keys.reduce((controls: Record<string, Stream<Values>>, key: string, index: number) => {
+        controls[key] = values[index];
+        return controls
+    }, {});
 
-    return { vdom: vdom$, command, storage: storage$ };
+    return { vdom: vdom$, props, storage: storage$ };
 }
