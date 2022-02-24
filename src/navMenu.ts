@@ -3,7 +3,7 @@ import { div, span, ul, li, nav, a, button, VNode } from '@cycle/dom';
 
 export default function navMenu(currentCmd: string, configs: Config[]): VNode {
     const items = configs.map((config: Config) => config.cmdType).map((cmdType: string) => {
-        const id = cmdType.toLocaleLowerCase();
+        const id = cmdType;
         const href = '/' + id;
         const title = cmdType[0].toLocaleUpperCase() + id.slice(1);
         const active = cmdType === currentCmd;

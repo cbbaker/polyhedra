@@ -1,5 +1,6 @@
 import { Stream, Subscription, Listener } from 'xstream';
 import * as three from 'three';
+import MeshProducer from './MeshProducer';
 
 export type ControlState = {
 		orientation: Stream<three.Quaternion>;
@@ -29,16 +30,12 @@ export const schema = [
     },
 ];
 
-export class Icosahedron {
-    mesh: three.Object3D;
-    geometry: three.Geometry;
+class Icosahedron extends MeshProducer {
     controls: ControlState;
-    subscriptions: Subscription[];
-    scene: three.Scene;
 
     constructor(controls: ControlState) {
+				super();
         this.controls = controls;
-				this.subscriptions = [];
         this.computeMesh();
     }
 
@@ -136,26 +133,9 @@ export class Icosahedron {
         }));
 
     }
-
-    addMesh(scene: three.Scene): three.Object3D {
-        this.scene = scene;
-        scene.add(this.mesh);
-        return this.mesh;
-    }
-
-    start(listener: Listener<(scene: three.Scene) => three.Object3D>) {
-        listener.next((scene: three.Scene): three.Object3D => this.addMesh(scene));
-    }
-
-    stop() {
-        if (this.scene) {
-            this.scene.remove(this.mesh);
-        }
-        this.subscriptions.forEach(subscription => subscription.unsubscribe());
-    }
-}
+};
 
 export default function icosahedron(command: Command): Stream<(scene: three.Scene) => three.Object3D> {
     const icosahedron = new Icosahedron(command.controls);
     return Stream.create(icosahedron);
-}
+};

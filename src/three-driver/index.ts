@@ -5,6 +5,7 @@ import clock from './clock';
 import { Schema } from './schema';
 import dodecahedron, { Command as DodecahedronCommand, schema as dodecahedronSchema } from './dodecahedron';
 import icosahedron, { Command as IcosahedronCommand, schema as icosahedronSchema } from './icosahedron';
+import stellaOctangula, { Command as StellaOctangulaCommand, schema as stellaOctangulaSchema } from './stellaOctangula';
 
 export type Config = {
     cmdType: string;
@@ -18,7 +19,11 @@ type InitializeCommand = {
     }
 }
 
-export type Command = InitializeCommand | DodecahedronCommand | IcosahedronCommand;
+export type Command
+		= InitializeCommand
+		| DodecahedronCommand
+		| IcosahedronCommand
+		| StellaOctangulaCommand;
 
 type State = {
     canvas: HTMLCanvasElement;
@@ -101,6 +106,12 @@ export default function makeThreeDriver() {
                         type: 'addMesh',
                         reducer: addMesh,
                     }) as ReducerType);
+
+                case 'stellaOctangula':
+                    return stellaOctangula(command).map(addMesh => ({
+                        type: 'addMesh',
+                        reducer: addMesh,
+                    }) as ReducerType);
             }
         })
             .flatten()
@@ -138,6 +149,10 @@ export default function makeThreeDriver() {
             {
                 cmdType: 'icosahedron',
                 schema: icosahedronSchema,
+            },
+            {
+                cmdType: 'stellaOctangula',
+                schema: stellaOctangulaSchema,
             },
         ] as Config[]);
     }

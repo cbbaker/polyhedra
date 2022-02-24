@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import makeThreeDriver, { Config, Command } from './three-driver';
 import dodecahedronControls from './dodecahedronControls';
 import icosahedronControls from './icosahedronControls';
+import stellaOctangulaControls from './stellaOctangulaControls';
 import navMenu from './navMenu';
 
 export type Sources = {
@@ -44,6 +45,8 @@ function controls({ DOM, three, storage, time }: Sources) {
             switch (config.cmdType) {
                 case 'icosahedron':
                     return icosahedronControls(DOM, config.schema, storage, time);
+                case 'stellaOctangula':
+                    return stellaOctangulaControls(DOM, config.schema, storage, time);
                 case 'dodecahedron':
                     return dodecahedronControls(DOM, config.schema, storage, time);
             }

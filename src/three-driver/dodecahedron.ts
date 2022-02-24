@@ -1,5 +1,6 @@
-import { Stream, Subscription, Listener } from 'xstream';
+import { Stream } from 'xstream';
 import * as three from 'three';
+import MeshProducer from './MeshProducer';
 
 export type ControlState = {
     orientation: Stream<three.Quaternion>;
@@ -134,18 +135,15 @@ function computeCubeOperations(operations: Permutation[]): Permutation[] {
 const cubeOperations = computeCubeOperations(operations);
 
 
-export class Dodecahedron {
-    mesh: three.Object3D;
-    geometry: three.Geometry;
+class Dodecahedron extends MeshProducer {
     controls: ControlState;
-    subscriptions: Subscription[];
     materials: Map<string, three.Material>;
     colors: string[];
-    scene: three.Scene;
 
     constructor(controls: ControlState) {
+				super();
+
         this.controls = controls;
-        this.subscriptions = [];
         this.createMaterials();
         this.computeMesh();
     }
@@ -328,26 +326,9 @@ export class Dodecahedron {
             }
         }));
     }
-
-    addMesh(scene: three.Scene): three.Object3D {
-        this.scene = scene;
-        scene.add(this.mesh);
-        return this.mesh;
-    }
-
-    start(listener: Listener<(scene: three.Scene) => three.Object3D>) {
-        listener.next((scene: three.Scene): three.Object3D => this.addMesh(scene));
-    }
-
-    stop() {
-        if (this.scene) {
-            this.scene.remove(this.mesh);
-        }
-        this.subscriptions.forEach(subscription => subscription.unsubscribe());
-    }
-}
+};
 
 export default function dodecahedron(command: Command): Stream<(scene: three.Scene) => three.Object3D> {
     const dodecahedron = new Dodecahedron(command.controls);
     return Stream.create(dodecahedron);
-}
+};
