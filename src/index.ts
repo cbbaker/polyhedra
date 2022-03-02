@@ -9,6 +9,7 @@ import { Config } from './three-driver/schema';
 import dodecahedronControls from './dodecahedronControls';
 import icosahedronControls from './icosahedronControls';
 import stellaOctangulaControls from './stellaOctangulaControls';
+import cuboctahedronControls from './cuboctahedronControls';
 import navMenu from './navMenu';
 
 export type Sources = {
@@ -52,6 +53,8 @@ function controls({ DOM, three, storage, time }: Sources) {
                     return stellaOctangulaControls(DOM, config, storage, time);
                 case 'dodecahedron':
                     return dodecahedronControls(DOM, config, storage, time);
+                case 'cuboctahedron':
+                    return cuboctahedronControls(DOM, config, storage, time);
             }
         })
         .startWith({

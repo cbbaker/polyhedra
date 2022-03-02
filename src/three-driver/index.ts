@@ -6,6 +6,7 @@ import { Schema, Config } from './schema';
 import dodecahedronConfig from './dodecahedron';
 import icosahedronConfig from './icosahedron';
 import stellaOctangulaConfig from './stellaOctangula';
+import cuboctahedronConfig from './cuboctahedron';
 
 type InitializeCommand = {
     cmdType: 'initialize';
@@ -130,6 +131,11 @@ export default function makeThreeDriver() {
             complete: () => { },
         });
 
-        return Stream.of([ dodecahedronConfig, icosahedronConfig, stellaOctangulaConfig ] as Config[]);
+        return Stream.of([
+						dodecahedronConfig,
+						icosahedronConfig,
+						stellaOctangulaConfig,
+						cuboctahedronConfig,
+				] as Config[]);
     }
 }

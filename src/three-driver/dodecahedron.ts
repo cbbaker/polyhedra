@@ -1,6 +1,7 @@
 import { Stream } from 'xstream';
 import * as three from 'three';
 import { ControlState as Controls } from './schema';
+import { Permutation, isPermutationOf, computeOperations } from './permutations';
 import MeshProducer from './MeshProducer';
 
 type ControlState = {
@@ -80,51 +81,11 @@ function isControlState(props: Record<string, Stream<unknown>>): props is Contro
 		});
 }
 
-type Permutation = number[];
-
-function permutationsEqual(p1: Permutation, p2: Permutation): boolean {
-    if (p1.length !== p2.length) {
-        return false;
-    }
-
-    for (let i = 0; i < p1.length; ++i) {
-        if (p1[i] !== p2[i]) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-function isPermutationOf(p1: Permutation, p2: Permutation): boolean {
-    if (p1.length !== p2.length) {
-        return false;
-    }
-
-    return p1.every(i => p2.indexOf(i) >= 0);
-}
-
-function compose(p1: Permutation, ...ps: Permutation[]) {
-    const compose2 = (p1: Permutation, p2: Permutation): Permutation => p1.map((i: number) => p2[i]);
-    return ps.reduce((acc, p) => compose2(acc, p), p1);
-}
-
 const id = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
 const a1 = [8, 5, 16, 13, 14, 19, 2, 11, 4, 18, 17, 3, 0, 15, 12, 7, 9, 1, 6, 10] // (0 8 4 14 12)(16 9 18 6 2)(7 11 3 13 15)(19 10 17 1 5)
 const b1 = [9, 18, 13, 7, 0, 14, 17, 10, 8, 4, 3, 11, 1, 19, 16, 6, 5, 15, 12, 2] //  (0 9 4)(12 1 18)(16 5 14)(7 10 3)(15 6 17)(19 2 13)
 
-function computeOperations(p: Permutation, operations: Permutation[]): Permutation[] {
-    if (operations.find((op: Permutation) => permutationsEqual(p, op))) {
-        return operations;
-    }
-
-    operations.push(p);
-
-    const leftOperations = computeOperations(compose(p, a1), operations);
-    return computeOperations(compose(p, b1), leftOperations);
-}
-
-const operations = computeOperations(id, []);
+const operations = computeOperations(a1, b1, id, []);
 
 function computeCubeOperations(operations: Permutation[]): Permutation[] {
     const found = [] as Permutation[];
