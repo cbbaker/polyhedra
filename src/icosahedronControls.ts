@@ -1,10 +1,11 @@
 import { Stream } from 'xstream';
-import { Vector3 } from 'three';
+import { Vector3, Quaternion } from 'three';
 import { MainDOMSource, VNode } from '@cycle/dom';
 import { StorageRequest, ResponseCollection } from '@cycle/storage';
 import { TimeSource } from '@cycle/time';
 import { Config } from './three-driver/schema';
 import { Command } from './three-driver';
+import orientationControls from './orientationControls';
 import simpleRotation from './simpleRotation';
 import createControls from './createControls';
 
@@ -18,7 +19,7 @@ export default function icosahedronControls(
 
 		const { vdom, props, storage } = createControls('icosahedron', 'Interpolate', controlSchema, DOM, storageResponses);
 
-		const orientation$ = simpleRotation(time, new Vector3(0.001, 0.001, 0.001));
+		const orientation$ = orientationControls(DOM, time, new Vector3(0.001, 0.001, 0.001));
 
 		const newProps = {
 				...props,

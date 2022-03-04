@@ -1,11 +1,11 @@
 import { Stream } from 'xstream';
-import { Vector3 } from 'three';
+import { Vector3, Quaternion } from 'three';
 import { MainDOMSource, VNode } from '@cycle/dom';
 import { StorageRequest, ResponseCollection } from '@cycle/storage';
 import { TimeSource } from '@cycle/time';
 import { Config } from './three-driver/schema';
 import { Command } from './three-driver';
-import simpleRotation from './simpleRotation';
+import orientationControls from './orientationControls';
 import createControls from './createControls';
 
 export default function dodecahedronControls(
@@ -18,7 +18,7 @@ export default function dodecahedronControls(
 
 		const { vdom, props, storage } = createControls('dodecahedron', 'Visibility', controlSchema, DOM, storageResponses);
 
-		const orientation$ = simpleRotation(time, new Vector3(0.001, 0.001, 0.001));
+		const orientation$ = orientationControls(DOM, time, new Vector3(0.001, 0.001, 0.001));
 
 		const newProps = {
 				...props,
