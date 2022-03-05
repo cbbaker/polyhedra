@@ -18,7 +18,7 @@ function eventToDelta(evt: MouseEvent): Delta {
 const zero: Gesture = { type: 'move', x: 0, y: 0 };
 
 export default function mouseEvents({ DOM }: { DOM: MainDOMSource } ): Stream<Gesture> {
-		return DOM.select('#canvas').events('mousedown')
+		return concat(DOM.select('#canvas').events('mousedown')
 				.take(1)
 				.map((evt: MouseEvent) => {
 						const startEvt = eventToDelta(evt)
@@ -39,5 +39,5 @@ export default function mouseEvents({ DOM }: { DOM: MainDOMSource } ): Stream<Ge
 
 										return { ...zero, x, y };
 								})
-				}).flatten();
+				}).flatten(), Stream.of({ type: 'done' }));
 }

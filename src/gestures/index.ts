@@ -3,10 +3,12 @@ import { Stream } from 'xstream';
 import { MainDOMSource } from '@cycle/dom';
 import { Gesture, Move, Twirl } from './types';
 import mouseEvents from './mouseEvents';
+import touchEvents from './touchEvents';
 import { Pose, PoseUpdater } from '../Pose';
 
 function events(sources: { DOM: MainDOMSource }): Stream<Gesture> {
-		return mouseEvents(sources);
+		const events$ = Stream.merge(mouseEvents(sources), touchEvents(sources));
+		return events$.endWhen(events$.filter(({ type }) => type === 'done' ));
 }
 
 function doMove({ x, y }: Move): Pose {

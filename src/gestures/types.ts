@@ -10,5 +10,9 @@ export type Twirl = {
 		scale: number;
 }
 
-export type Gesture = Move | Twirl;
+export type Done = {
+		type: 'done';
+}
+
+export type Gesture = Move | Twirl | Done;
 

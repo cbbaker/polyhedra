@@ -3,6 +3,7 @@ import storageDriver, { ResponseCollection, StorageRequest } from '@cycle/storag
 import { timeDriver, TimeSource } from '@cycle/time';
 import { Stream } from 'xstream';
 import { div, form, canvas, makeDOMDriver, MainDOMSource, VNode } from '@cycle/dom';
+import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import makeThreeDriver, { Command } from './three-driver';
 import { Config } from './three-driver/schema';
