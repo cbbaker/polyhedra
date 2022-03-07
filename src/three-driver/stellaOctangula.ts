@@ -8,10 +8,11 @@ import {
 } from 'three';
 import { Stream } from 'xstream';
 import { ControlState as Controls } from './schema';
+import { Pose } from '../Pose';
 import MeshProducer from './MeshProducer';
 
 type ControlState = {
-		orientation: Stream<Quaternion>;
+		pose: Stream<Pose>;
 		coreOpacity: Stream<number>;
 		coreHue: Stream<number>;
 		figureOpacity: Stream<number>;
@@ -21,11 +22,15 @@ type ControlState = {
 		caseHue: Stream<number>;
 };
 
-const schema = [{
-				type: 'quaternion',
-				id: 'orientation',
+const schema = [
+		{
+				type: 'pose',
+				id: 'pose',
 				title: 'Orientation',
-				initial: new Quaternion(0, 0, 0, 1),
+				initial: {
+						orientation: new Quaternion(0, 0, 0, 1),
+						scale: 1,
+				},
 		}, {
 				type: 'range',
 				id: 'coreOpacity',
@@ -204,11 +209,12 @@ class StellaOctangula extends MeshProducer {
 
         this.mesh = new Mesh(this.geometry, this.materials);
 
-        this.addSubscription(this.controls.orientation.subscribe({
-            next: (orientation: Quaternion) => {
-                this.mesh.quaternion.copy(orientation);
-            }
-        }));
+				this.addSubscription(this.controls.pose.subscribe({
+						next: ({ orientation, scale }: Pose) => {
+								this.mesh.quaternion.copy(orientation);
+								this.mesh.scale.setScalar(scale);
+						}
+				}));
 
 				// core
 				this.addFace([0, 2, 4], 0);

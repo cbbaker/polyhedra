@@ -30,21 +30,19 @@ function doMove({ x, y }: Move): Pose {
 }
 
 function doTwirl({ angle, scale }: Twirl): Pose {
-		if (angle > 0.001 || angle < -0.001) {
-				const cos = Math.cos(-angle), sin = Math.sin(-angle);
-				const orientation = new Quaternion(0, 0, sin, cos);
-				return {
-						orientation,
-						scale: 1,
-						angVel: new Vector3(0, 0, angle),
-				};
-		}
-
-		return {
+		const result = {
 				orientation: new Quaternion(0, 0, 0, 1),
 				scale,
 				angVel: new Vector3(0, 0, 0),
+		};
+
+		if (angle > 0.001 || angle < -0.001) {
+				const cos = Math.cos(-angle), sin = Math.sin(-angle);
+				result.orientation = new Quaternion(0, 0, sin, cos);
+				result.angVel = new Vector3(0, 0, angle);
 		}
+
+		return result
 }
 
 export default function gestures(sources: { DOM: MainDOMSource }): Stream<Pose> {

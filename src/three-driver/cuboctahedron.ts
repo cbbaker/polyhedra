@@ -8,12 +8,13 @@ import {
 } from 'three';
 import { Stream } from 'xstream';
 import { ControlState as Controls } from './schema';
+import { Pose } from '../Pose';
 import { computeOperations } from './permutations';
 
 import MeshProducer from './MeshProducer';
 
 type ControlState = {
-		orientation: Stream<Quaternion>;
+		pose: Stream<Pose>;
 		coreOpacity: Stream<number>;
 		coreHue: Stream<number>;
 		cubeOpacity: Stream<number>;
@@ -24,11 +25,15 @@ type ControlState = {
 		caseHue: Stream<number>;
 };
 
-const schema = [{
-				type: 'quaternion',
-				id: 'orientation',
+const schema = [
+		{
+				type: 'pose',
+				id: 'pose',
 				title: 'Orientation',
-				initial: new Quaternion(0, 0, 0, 1),
+				initial: {
+						orientation: new Quaternion(0, 0, 0, 1),
+						scale: 1,
+				},
 		}, {
 				type: 'range',
 				id: 'coreOpacity',
@@ -201,11 +206,11 @@ class Cuboctahedron extends MeshProducer {
 		}
 
 		addFace(indices: number[], materialIndex: number) {
-        for (let i = 2; i < indices.length; ++i) {
-            const face = new Face3(indices[0], indices[i - 1], indices[i]);
-            face.materialIndex = materialIndex;
-            this.geometry.faces.push(face);
-        }
+				for (let i = 2; i < indices.length; ++i) {
+						const face = new Face3(indices[0], indices[i - 1], indices[i]);
+						face.materialIndex = materialIndex;
+						this.geometry.faces.push(face);
+				}
 		}
 
 		createMesh() {
@@ -242,13 +247,14 @@ class Cuboctahedron extends MeshProducer {
 						new Vector3(-1,  1,  1), // 25
 				);
 
-        this.mesh = new Mesh(this.geometry, this.materials);
+				this.mesh = new Mesh(this.geometry, this.materials);
 
-        this.addSubscription(this.controls.orientation.subscribe({
-            next: (orientation: Quaternion) => {
-                this.mesh.quaternion.copy(orientation);
-            }
-        }));
+				this.addSubscription(this.controls.pose.subscribe({
+						next: ({ orientation, scale }: Pose) => {
+								this.mesh.quaternion.copy(orientation);
+								this.mesh.scale.setScalar(scale);
+						}
+				}));
 
 				// core
 				this.addFace([0,2,1,3], 0);
@@ -299,9 +305,9 @@ class Cuboctahedron extends MeshProducer {
 				this.addFace([15,24,16,19], 3);
 				this.addFace([12,18,16,24], 3);
 
-        this.geometry.computeBoundingSphere();
-        this.geometry.computeFaceNormals();
-        this.geometry.elementsNeedUpdate = true;
+				this.geometry.computeBoundingSphere();
+				this.geometry.computeFaceNormals();
+				this.geometry.elementsNeedUpdate = true;
 		}
 };
 

@@ -3,7 +3,7 @@ import { MainDOMSource } from '@cycle/dom';
 import { TimeSource } from '@cycle/time';
 import simpleRotation from './simpleRotation';
 import gestures from './gestures';
-import { Pose, PoseUpdater } from './Pose';
+import { Pose } from './Pose';
 import interruptedBy from './interruptedBy';
 
 export default function orientationControls(
@@ -24,6 +24,5 @@ export default function orientationControls(
 				const orientation = pose.orientation.premultiply(delta.orientation);
 				const scale = pose.scale * delta.scale;
 				return { orientation, scale, angVel: delta.angVel };
-		}, init)
-				.map(({ orientation }: Pose) => orientation);
+		}, init);
 }

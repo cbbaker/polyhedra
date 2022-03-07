@@ -14,7 +14,7 @@ export default function stellaOctangulaControls(
 		storageResponses: ResponseCollection,
 		time: TimeSource,
 ): { vdom: Stream<VNode>, command: Command, storage: Stream<StorageRequest> } {
-		const controlSchema = config.schema.filter(({ id }) => (id !== 'orientation'));
+		const controlSchema = config.schema.filter(({ id }) => (id !== 'pose'));
 
 		const { vdom, props, storage } = createControls('stellaOctangula', 'Colors', controlSchema, DOM, storageResponses);
 
@@ -22,7 +22,7 @@ export default function stellaOctangulaControls(
 
 		const newProps = {
 				...props,
-				orientation: orientation$,
+				pose: orientation$,
 		};
 
 		const producer = new config.ctor(newProps);

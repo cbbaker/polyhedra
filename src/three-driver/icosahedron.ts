@@ -1,20 +1,24 @@
 import { Stream, Subscription, Listener } from 'xstream';
 import * as three from 'three';
 import { ControlState as Controls } from './schema';
+import { Pose } from '../Pose';
 import MeshProducer from './MeshProducer';
 
 type ControlState = {
-		orientation: Stream<three.Quaternion>;
+		pose: Stream<Pose>;
     interpolate: Stream<number>;
 }
 
 export const schema = [
-    {
-        type: 'quaternion',
-        id: 'orientation',
-        title: 'Orientation',
-        initial: new three.Quaternion(0, 0, 0, 1),
-    },
+		{
+				type: 'pose',
+				id: 'pose',
+				title: 'Orientation',
+				initial: {
+						orientation: new three.Quaternion(0, 0, 0, 1),
+						scale: 1,
+				},
+		},
     {
         type: 'range',
         id: 'interpolate',
@@ -136,12 +140,12 @@ class Icosahedron extends MeshProducer {
 
         this.mesh = new three.Mesh(this.geometry, material);
 
-        this.subscriptions.push(this.controls.orientation.subscribe({
-            next: (orientation: three.Quaternion) => {
-                this.mesh.quaternion.copy(orientation);
-            }
-        }));
-
+				this.addSubscription(this.controls.pose.subscribe({
+						next: ({ orientation, scale }: Pose) => {
+								this.mesh.quaternion.copy(orientation);
+								this.mesh.scale.setScalar(scale);
+						}
+				}));
     }
 };
 

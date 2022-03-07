@@ -15,7 +15,7 @@ export default function icosahedronControls(
 		storageResponses: ResponseCollection,
 		time: TimeSource,
 ): { vdom: Stream<VNode>, command: Command, storage: Stream<StorageRequest> } {
-		const controlSchema = config.schema.filter(({ id }) => (id !== 'orientation'));
+		const controlSchema = config.schema.filter(({ id }) => (id !== 'pose'));
 
 		const { vdom, props, storage } = createControls('icosahedron', 'Interpolate', controlSchema, DOM, storageResponses);
 
@@ -23,7 +23,7 @@ export default function icosahedronControls(
 
 		const newProps = {
 				...props,
-				orientation: orientation$,
+				pose: orientation$,
 		};
 
 		const producer = new config.ctor(newProps);

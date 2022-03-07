@@ -18,7 +18,7 @@ export default function cuboctahedronControls(
 		storageResponses: ResponseCollection,
 		time: TimeSource,
 ): { vdom: Stream<VNode>, command: Command, storage: Stream<StorageRequest> } {
-		const controlSchema = config.schema.filter(({ id }) => (id !== 'orientation'));
+		const controlSchema = config.schema.filter(({ id }) => (id !== 'pose'));
 
 		const { vdom, props, storage } = createControls('cuboctahedron', 'Visibility', controlSchema, DOM, storageResponses);
 
@@ -26,7 +26,7 @@ export default function cuboctahedronControls(
 
 		const newProps = {
 				...props,
-				orientation: orientation$,
+				pose: orientation$,
 		};
 
 		const producer = new config.ctor(newProps);

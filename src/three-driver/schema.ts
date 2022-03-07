@@ -1,5 +1,6 @@
 import { Stream } from 'xstream'
 import * as three from 'three';
+import { Pose } from '../Pose';
 import MeshProducer from './MeshProducer';
 
 export type Range = {
@@ -19,18 +20,21 @@ export type Boolean = {
     initial: boolean;
 };
 
-export type Quaternion = {
-    type: 'quaternion';
+export type PoseType = {
+    type: 'pose';
     id: string;
     title: string;
-    initial: three.Quaternion;
+    initial: {
+				orientation: three.Quaternion,
+				scale: number,
+		};
 }
 
-export type Item = Range | Boolean | Quaternion;
+export type Item = Range | Boolean | PoseType;
 
 export type Schema = Item[];
 
-export type Value = number | boolean | three.Quaternion;
+export type Value = number | boolean | Pose;
 
 export type ControlState = Record<string, Stream<Value>>;
 
