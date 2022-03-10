@@ -7,6 +7,7 @@ import dodecahedronConfig from './dodecahedron';
 import icosahedronConfig from './icosahedron';
 import stellaOctangulaConfig from './stellaOctangula';
 import cuboctahedronConfig from './cuboctahedron';
+import icosadodecahedronConfig from './icosadodecahedron';
 
 type InitializeCommand = {
     cmdType: 'initialize';
@@ -136,6 +137,7 @@ export default function makeThreeDriver() {
 						icosahedronConfig,
 						stellaOctangulaConfig,
 						cuboctahedronConfig,
+						icosadodecahedronConfig,
 				] as Config[]);
     }
 }

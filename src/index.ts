@@ -11,6 +11,7 @@ import dodecahedronControls from './dodecahedronControls';
 import icosahedronControls from './icosahedronControls';
 import stellaOctangulaControls from './stellaOctangulaControls';
 import cuboctahedronControls from './cuboctahedronControls';
+import icosadodecahedronControls from './icosadodecahedronControls';
 import navMenu from './navMenu';
 
 export type Sources = {
@@ -56,6 +57,8 @@ function controls({ DOM, three, storage, time }: Sources) {
                     return dodecahedronControls(DOM, config, storage, time);
                 case 'cuboctahedron':
                     return cuboctahedronControls(DOM, config, storage, time);
+                case 'icosadodecahedron':
+                    return icosadodecahedronControls(DOM, config, storage, time);
             }
         })
         .startWith({

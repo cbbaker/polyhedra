@@ -8,7 +8,7 @@ import {
 import { Stream } from 'xstream';
 import { ControlState as Controls } from './schema';
 import { Pose } from '../Pose';
-import { compound } from './groups/octahedral';
+import { compound } from './groups/icosahedral';
 import MeshProducer from './MeshProducer';
 import { Polyhedron } from './groups/Group';
 
@@ -16,10 +16,10 @@ type ControlState = {
 		pose: Stream<Pose>;
 		coreOpacity: Stream<number>;
 		coreHue: Stream<number>;
-		cubeOpacity: Stream<number>;
-		cubeHue: Stream<number>;
-		octahedronOpacity: Stream<number>;
-		octahedronHue: Stream<number>;
+		dodecahedronOpacity: Stream<number>;
+		dodecahedronHue: Stream<number>;
+		icosahedronOpacity: Stream<number>;
+		icosahedronHue: Stream<number>;
 		caseOpacity: Stream<number>;
 		caseHue: Stream<number>;
 };
@@ -51,32 +51,32 @@ const schema = [
 				initial: 0.5,
 		}, {
 				type: 'range',
-				id: 'cubeOpacity',
-				title: 'Cube Opacity',
+				id: 'dodecahedronOpacity',
+				title: 'Dodecahedron Opacity',
 				min: 0,
 				max: 1,
 				step: 0.05,
 				initial: 1,
 		}, {
 				type: 'range',
-				id: 'cubeHue',
-				title: 'Cube Hue',
+				id: 'dodecahedronHue',
+				title: 'Dodecahedron Hue',
 				min: 0,
 				max: 1,
 				step: 0.05,
 				initial: 0.5,
 		}, {
 				type: 'range',
-				id: 'octahedronOpacity',
-				title: 'Octahedron Opacity',
+				id: 'icosahedronOpacity',
+				title: 'Icosahedron Opacity',
 				min: 0,
 				max: 1,
 				step: 0.05,
 				initial: 1,
 		}, {
 				type: 'range',
-				id: 'octahedronHue',
-				title: 'Octahedron Hue',
+				id: 'icosahedronHue',
+				title: 'Icosahedron Hue',
 				min: 0,
 				max: 1,
 				step: 0.05,
@@ -109,7 +109,7 @@ function isControlState(props: Record<string, Stream<unknown>>): props is Contro
 		});
 }
 
-class Cuboctahedron extends MeshProducer {
+class Icosadodecahedron extends MeshProducer {
 		polyhedron: Polyhedron;
 		controls: ControlState;
 		materials: MeshPhongMaterial[];
@@ -132,8 +132,8 @@ class Cuboctahedron extends MeshProducer {
 		createMaterials() {
 				this.materials = [
 						new MeshPhongMaterial({ color: 0, transparent: true }), // core
-						new MeshPhongMaterial({ color: 0, transparent: true }), // cube
-						new MeshPhongMaterial({ color: 0, transparent: true }), // octahedron
+						new MeshPhongMaterial({ color: 0, transparent: true }), // dodecahedron
+						new MeshPhongMaterial({ color: 0, transparent: true }), // icosahedron
 						new MeshPhongMaterial({ color: 0, transparent: true }), // case
 				];
 
@@ -154,28 +154,28 @@ class Cuboctahedron extends MeshProducer {
 						},
 				}));
 
-				this.addSubscription(this.controls.cubeOpacity.subscribe({
+				this.addSubscription(this.controls.dodecahedronOpacity.subscribe({
 						next: (opacity: number) => {
 								this.materials[1].opacity = opacity;
 								this.materials[1].needsUpdate = true;
 						},
 				}));
 
-				this.addSubscription(this.controls.cubeHue.subscribe({
+				this.addSubscription(this.controls.dodecahedronHue.subscribe({
 						next: (hue: number) => {
 								this.materials[1].color.setHSL(hue, saturation, value);
 								this.materials[1].needsUpdate = true;
 						},
 				}));
 
-				this.addSubscription(this.controls.octahedronOpacity.subscribe({
+				this.addSubscription(this.controls.icosahedronOpacity.subscribe({
 						next: (opacity: number) => {
 								this.materials[2].opacity = opacity;
 								this.materials[2].needsUpdate = true;
 						},
 				}));
 
-				this.addSubscription(this.controls.octahedronHue.subscribe({
+				this.addSubscription(this.controls.icosahedronHue.subscribe({
 						next: (hue: number) => {
 								this.materials[2].color.setHSL(hue, saturation, value);
 								this.materials[2].needsUpdate = true;
@@ -217,10 +217,10 @@ class Cuboctahedron extends MeshProducer {
 						}
 				}));
 
-				this.polyhedron.faces.cuboctahedron.forEach(faces => faces.forEach(face => this.addFace(face, 0)));
-				this.polyhedron.faces.cube.forEach(faces => faces.forEach(face => this.addFace(face, 1)));
-				this.polyhedron.faces.octahedron.forEach(faces => faces.forEach(face => this.addFace(face, 2)));
-				this.polyhedron.faces.rhombicDodecahedron.forEach(faces => faces.forEach(face => this.addFace(face, 3)));
+				this.polyhedron.faces.icosadodecahedron.forEach(faces => faces.forEach(face => this.addFace(face, 0)));
+				this.polyhedron.faces.dodecahedron.forEach(faces => faces.forEach(face => this.addFace(face, 1)));
+				this.polyhedron.faces.icosahedron.forEach(faces => faces.forEach(face => this.addFace(face, 2)));
+				this.polyhedron.faces.rhombicTriacontahedron.forEach(faces => faces.forEach(face => this.addFace(face, 3)));
 				
 
 				this.geometry.computeBoundingSphere();
@@ -230,10 +230,10 @@ class Cuboctahedron extends MeshProducer {
 };
 
 const config = {
-		id: 'cuboctahedron',
-		title: 'Cuboctahedron',
+		id: 'icosadodecahedron',
+		title: 'Icosadodecahedron',
 		schema,
-		ctor: Cuboctahedron,
+		ctor: Icosadodecahedron,
 };
 
 export default config;
