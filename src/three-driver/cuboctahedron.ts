@@ -130,11 +130,12 @@ class Cuboctahedron extends MeshProducer {
 		}
 
 		createMaterials() {
+				const blackParams = { color: 0, transparent: true };
 				this.materials = [
-						new MeshPhongMaterial({ color: 0, transparent: true }), // core
-						new MeshPhongMaterial({ color: 0, transparent: true }), // cube
-						new MeshPhongMaterial({ color: 0, transparent: true }), // octahedron
-						new MeshPhongMaterial({ color: 0, transparent: true }), // case
+						new MeshPhongMaterial({ ...blackParams, polygonOffset: true, polygonOffsetUnits: -10}), // core
+						new MeshPhongMaterial(blackParams), // dodecahedron
+						new MeshPhongMaterial(blackParams), // icosahedron
+						new MeshPhongMaterial(blackParams), // case
 				];
 
 				const saturation = 0.5;
