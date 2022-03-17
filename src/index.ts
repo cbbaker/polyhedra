@@ -1,6 +1,8 @@
 import { run } from '@cycle/run';
 import storageDriver, { ResponseCollection, StorageRequest } from '@cycle/storage';
+import { captureClicks, makeHistoryDriver } from '@cycle/history';
 import { timeDriver, TimeSource } from '@cycle/time';
+import { Location } from 'history';
 import { Stream } from 'xstream';
 import { div, form, canvas, makeDOMDriver, MainDOMSource, VNode } from '@cycle/dom';
 import 'bootstrap';
@@ -19,6 +21,7 @@ export type Sources = {
 		three: Stream<Config[]>,
 		storage: ResponseCollection,
 		time: TimeSource,
+		history: Stream<Location>,
 }
 
 function getState(url: string): string {
@@ -30,39 +33,41 @@ function getState(url: string): string {
     return found[1];
 }
 
-function controls({ DOM, three, storage, time }: Sources) {
-    const state$ = DOM.select('.nav-link')
-        .events('click')
-        .map((event: Event) => {
-            event.preventDefault();
-            return (event.currentTarget as Element).id;
-        })
-        .startWith(getState(window.location.href))
+function controls({ DOM, three, storage, time, history }: Sources) {
+		const state$ = history.map(location => getState(location.pathname));
     const configs$ = three;
     const validatedState$ = Stream
         .combine(state$, configs$)
         .map(([state, configs]: [string, Config[]]) => configs.find((config: Config) => config.id === state))
-        .filter((config: Config) => config !== undefined)
+        .filter((config: Config) => config !== undefined);
 
 		const command: Command = { cmdType: 'initialize', props: { canvasId: 'canvas' } };
 
-    const control$: Stream<{vdom: Stream<VNode>, command: Command, storage: Stream<StorageRequest> }> = validatedState$
+    const control$: Stream<{vdom: Stream<VNode>, command: Command, state: string, storage: Stream<StorageRequest> }> = validatedState$
         .map((config: Config) => {
             switch (config.id) {
                 case 'icosahedron':
-                    return icosahedronControls(DOM, config, storage, time);
+                    return { ...icosahedronControls(DOM, config, storage, time), state: config.id };
                 case 'stellaOctangula':
-                    return stellaOctangulaControls(DOM, config, storage, time);
+                    return { ...stellaOctangulaControls(DOM, config, storage, time), state: config.id };
                 case 'dodecahedron':
-                    return dodecahedronControls(DOM, config, storage, time);
+                    return { ...dodecahedronControls(DOM, config, storage, time), state: config.id };
                 case 'cuboctahedron':
-                    return cuboctahedronControls(DOM, config, storage, time);
+                    return { ...cuboctahedronControls(DOM, config, storage, time), state: config.id };
                 case 'icosadodecahedron':
-                    return icosadodecahedronControls(DOM, config, storage, time);
+                    return { ...icosadodecahedronControls(DOM, config, storage, time), state: config.id };
+								default:
+										return {
+												vdom: Stream.of(div()),
+												state: '',
+												command,
+												storage: Stream.from([]),
+										};
             }
         })
         .startWith({
             vdom: Stream.of(div()),
+						state: '',
             command,
             storage: Stream.from([]),
         });
@@ -76,11 +81,11 @@ function controls({ DOM, three, storage, time }: Sources) {
         .flatten();
 
     const vdom$ = Stream.combine(control$, configs$)
-        .map(([{ vdom: controls$, command: { cmdType: currentCmd } }, configs]:
-            [{ vdom: Stream<VNode>, command: { cmdType: string } }, Config[]]) => {
+        .map(([{ vdom: controls$, state }, configs]:
+							[{ vdom: Stream<VNode>, state: string }, Config[]]) => {
             return controls$.map((controls) =>
                 div('.row', {}, [
-                    navMenu(currentCmd, configs),
+                    navMenu(state, configs),
                     div('.col-12.col-md-8', {}, [
                         canvas('#canvas', {
                             style: {
@@ -131,6 +136,7 @@ const drivers = {
     three: makeThreeDriver(),
     storage: storageDriver,
 		time: timeDriver,
+		history: captureClicks(makeHistoryDriver()),
 };
 
 run(main, drivers);

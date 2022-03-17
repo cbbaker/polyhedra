@@ -29,6 +29,7 @@
 		},
 		"dependencies": {
 				"@cycle/dom": "^23.0.0",
+				"@cycle/history": "^9.0.0",
 				"@cycle/isolate": "^5.2.0",
 				"@cycle/run": "^5.7.0",
 				"@cycle/storage": "^5.1.2",
