@@ -1,28 +1,17 @@
 import { run } from '@cycle/run';
-import storageDriver, { ResponseCollection, StorageRequest } from '@cycle/storage';
+import storageDriver, { StorageRequest } from '@cycle/storage';
 import { captureClicks, makeHistoryDriver } from '@cycle/history';
-import { timeDriver, TimeSource } from '@cycle/time';
+import { timeDriver } from '@cycle/time';
 import { Location } from 'history';
 import { Stream } from 'xstream';
-import { div, form, canvas, makeDOMDriver, MainDOMSource, VNode } from '@cycle/dom';
+import { div, form, canvas, makeDOMDriver, VNode } from '@cycle/dom';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import makeThreeDriver, { Command } from './three-driver';
 import { Config } from './three-driver/schema';
-import dodecahedronControls from './dodecahedronControls';
-import icosahedronControls from './icosahedronControls';
-import stellaOctangulaControls from './stellaOctangulaControls';
-import cuboctahedronControls from './cuboctahedronControls';
-import icosadodecahedronControls from './icosadodecahedronControls';
+import polyhedronControls from './polyhedronControls'
 import navMenu from './navMenu';
-
-export type Sources = {
-		DOM: MainDOMSource,
-		three: Stream<Config[]>,
-		storage: ResponseCollection,
-		time: TimeSource,
-		history: Stream<Location>,
-}
+import { Sources } from './Sources';
 
 function getState(url: string): string {
     const found = url.match(/\/([^\/]*)$/)
@@ -33,9 +22,16 @@ function getState(url: string): string {
     return found[1];
 }
 
-function controls({ DOM, three, storage, time, history }: Sources) {
-		const state$ = history.map(location => getState(location.pathname));
-    const configs$ = three;
+function computeControls(id: string, title: string, config: Config, sources: Sources) {
+    return {
+				...polyhedronControls(id, title, config, sources),
+				state: config.id,
+		};
+}
+
+function controls(sources: Sources) {
+		const state$ = sources.history.map((location: Location) => getState(location.pathname));
+    const configs$ = sources.three;
     const validatedState$ = Stream
         .combine(state$, configs$)
         .map(([state, configs]: [string, Config[]]) => configs.find((config: Config) => config.id === state))
@@ -47,15 +43,15 @@ function controls({ DOM, three, storage, time, history }: Sources) {
         .map((config: Config) => {
             switch (config.id) {
                 case 'icosahedron':
-                    return { ...icosahedronControls(DOM, config, storage, time), state: config.id };
+                    return computeControls('icosahedron', 'Interpolate', config, sources);
                 case 'stellaOctangula':
-                    return { ...stellaOctangulaControls(DOM, config, storage, time), state: config.id };
+                    return computeControls('stellaOctangula', 'Visibility', config, sources);
                 case 'dodecahedron':
-                    return { ...dodecahedronControls(DOM, config, storage, time), state: config.id };
+                    return computeControls('dodecahedron', 'Visibility', config, sources);
                 case 'cuboctahedron':
-                    return { ...cuboctahedronControls(DOM, config, storage, time), state: config.id };
+                    return computeControls('cuboctahedron', 'Visibility', config, sources);
                 case 'icosadodecahedron':
-                    return { ...icosadodecahedronControls(DOM, config, storage, time), state: config.id };
+                    return computeControls('icosadodecahedron', 'Visibility', config, sources);
 								default:
 										return {
 												vdom: Stream.of(div()),
