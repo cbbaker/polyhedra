@@ -3,7 +3,7 @@ import { div, span, ul, li, nav, a, button, VNode } from '@cycle/dom';
 
 export default function navMenu(currentCmd: string, configs: Config[]): VNode {
     const items = configs.map(({ id, title }: Config) => {
-        const href = '/' + id;
+        const href = id;
         const active = id === currentCmd;
 
         return li('.nav-item', {}, [
