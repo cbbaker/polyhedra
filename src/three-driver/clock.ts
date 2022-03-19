@@ -1,15 +1,12 @@
-import { Stream } from 'xstream';
-import { animationFrameScheduler, interval } from 'rxjs';
-import { scan } from 'rxjs/operators';
+import { timeDriver } from '@cycle/time';
 
 export type Clock = {
 		time: number,
 		delta: number,
 }
 
-const clock = interval(0, animationFrameScheduler).pipe(scan((previous: Clock, _: number) => {
-    const time = performance.now();
-    return { time, delta: time - previous.time };
-}, { time: performance.now(), delta: 0 }));
+const time = timeDriver({});
 
-export default Stream.from(clock);
+const clock = time.animationFrames();
+
+export default clock;
